@@ -2,7 +2,8 @@
   "functions": {
     "api/instagram.js": {
       "maxDuration": 10,
-      "memory": 1024
+      "memory": 1024,
+      "runtime": "nodejs20.x"
     }
   },
   "routes": [
