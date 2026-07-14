@@ -8,6 +8,7 @@ module.exports = async function handler(req, res) {
   try {
     const { username, api_key } = req.query;
 
+    // 🔑 API Key Check
     if (api_key !== 'madara') {
       return res.status(401).json({
         success: false,
@@ -22,19 +23,40 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Instagram API call
-    const igResponse = await fetch(
-      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
+    console.log(`🔍 Fetching: ${username}`);
+
+    // 🔥 Instagram API Call with ALL headers
+    const response = await fetch(
+      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
       {
         headers: {
-          'x-ig-app-id': '936619743392459',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
           'Accept-Language': 'en-US,en;q=0.9',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          'Referer': 'https://www.instagram.com/',
+          'Origin': 'https://www.instagram.com',
+          'x-ig-app-id': '936619743392459',
+          'x-ig-www-claim': 'hmac.AR3X...', // optional but helps
+          'Cookie': 'ig_did=...', // optional
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin'
         }
       }
     );
 
-    const data = await igResponse.json();
+    console.log(`📡 Response Status: ${response.status}`);
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        error: `Instagram API returned ${response.status}`
+      });
+    }
+
+    const data = await response.json();
+    console.log(`✅ Data received:`, Object.keys(data));
+
     const user = data.data?.user;
 
     if (!user) {
@@ -44,6 +66,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // 📸 Recent posts
     const mediaEdges = user.edge_owner_to_timeline_media?.edges || [];
     const recentPosts = mediaEdges.slice(0, 5).map(edge => ({
       id: edge.node.id,
@@ -54,7 +77,8 @@ module.exports = async function handler(req, res) {
       timestamp: new Date(edge.node.taken_at_timestamp * 1000).toISOString()
     }));
 
-    const response = {
+    // 🎯 Final Response
+    const finalResponse = {
       success: true,
       type: 'profile',
       username: user.username || null,
@@ -74,12 +98,13 @@ module.exports = async function handler(req, res) {
       recent_posts: user.is_private ? [] : recentPosts
     };
 
-    return res.status(200).json(response);
+    return res.status(200).json(finalResponse);
 
   } catch (error) {
+    console.error('❌ Error:', error.message);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message || 'Internal server error'
     });
   }
 };
