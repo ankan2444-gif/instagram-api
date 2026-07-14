@@ -6,10 +6,8 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   try {
-    // Query parameters
     const { username, api_key } = req.query;
 
-    // 🛡️ API Key Check
     if (api_key !== 'madara') {
       return res.status(401).json({
         success: false,
@@ -17,7 +15,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Username check
     if (!username) {
       return res.status(400).json({
         success: false,
@@ -25,7 +22,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Instagram internal API call
+    // Instagram API call
     const igResponse = await fetch(
       `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
       {
@@ -47,7 +44,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Recent posts extract
     const mediaEdges = user.edge_owner_to_timeline_media?.edges || [];
     const recentPosts = mediaEdges.slice(0, 5).map(edge => ({
       id: edge.node.id,
@@ -58,7 +54,6 @@ export default async function handler(req, res) {
       timestamp: new Date(edge.node.taken_at_timestamp * 1000).toISOString()
     }));
 
-    // Final response
     const response = {
       success: true,
       type: 'profile',
