@@ -1,6 +1,7 @@
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+  // CORS enable
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
@@ -21,6 +22,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Instagram API call
     const igResponse = await fetch(
       `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
       {
@@ -80,4 +82,4 @@ export default async function handler(req, res) {
       error: error.message
     });
   }
-}
+};
