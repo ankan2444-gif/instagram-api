@@ -1,16 +1,4 @@
 {
-  "functions": {
-    "api/instagram.js": {
-      "maxDuration": 10,
-      "memory": 1024
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/instagram",
-      "dest": "/api/instagram.js"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
