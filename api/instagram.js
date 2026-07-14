@@ -1,13 +1,12 @@
-// api/instagram/index.js
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  // CORS enable (kisi bhi frontend se use kar sakte ho)
+  // CORS enable
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   try {
-    // Query parameters: username aur api_key
+    // Query parameters
     const { username, api_key } = req.query;
 
     // 🛡️ API Key Check
@@ -26,7 +25,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🔥 Instagram internal API call (yeh private account ka bhi data dega!)
+    // Instagram internal API call
     const igResponse = await fetch(
       `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
       {
@@ -41,16 +40,14 @@ export default async function handler(req, res) {
     const data = await igResponse.json();
     const user = data.data?.user;
 
-    // ✅ FIX: Agar user null hai toh "User not found" mat bhejo!
-    // Private account ka data bhi aayega, bas recent posts nahi aayenge
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'User not found (maybe username galat hai)'
+        error: 'User not found!'
       });
     }
 
-    // 📸 Recent posts extract (sirf public account ke liye)
+    // Recent posts extract
     const mediaEdges = user.edge_owner_to_timeline_media?.edges || [];
     const recentPosts = mediaEdges.slice(0, 5).map(edge => ({
       id: edge.node.id,
@@ -61,7 +58,7 @@ export default async function handler(req, res) {
       timestamp: new Date(edge.node.taken_at_timestamp * 1000).toISOString()
     }));
 
-    // 🎯 FINAL JSON RESPONSE (sab fields hain!)
+    // Final response
     const response = {
       success: true,
       type: 'profile',
@@ -74,12 +71,12 @@ export default async function handler(req, res) {
       profile_pic_url: user.profile_pic_url_hd || user.profile_pic_url || null,
       external_url: user.external_url || null,
       is_verified: user.is_verified || false,
-      is_private: user.is_private || false,   // ✅ TRUE aayega private account ke liye
+      is_private: user.is_private || false,
       business_category: user.business_category_name || null,
       has_channel: user.has_channel || false,
       mutual_followers: user.edge_mutual_followed_by?.count || 0,
       igtv_videos_count: user.edge_felix_video_timeline?.count || 0,
-      recent_posts: user.is_private ? [] : recentPosts  // ✅ Private = empty array
+      recent_posts: user.is_private ? [] : recentPosts
     };
 
     return res.status(200).json(response);
